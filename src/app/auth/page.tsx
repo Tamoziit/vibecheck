@@ -14,7 +14,7 @@ const page = () => {
                     <Image
                         src={"/logo.png"}
                         alt="logo"
-                        width={763}
+                         width={763}
                         height={173}
                         className="mt-20 w-[420px] z-0 pointer-events-none select-none"
                     />
