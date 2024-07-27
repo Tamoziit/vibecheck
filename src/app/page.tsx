@@ -2,8 +2,9 @@ import Image from "next/image";
 import PreferencesTab from "../components/PreferencesTab";
 import ChatLayout from "@/components/chat/ChatLayout";
 import { cookies } from "next/headers";
+import { redis } from "@/lib/db";
 
-export default function Home() {
+export default async function Home() {
   const layout = cookies().get("react-resizable-panels:layout"); //storing chat panels sizes in cookies to store theirs states over refreshes.
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined;
 
