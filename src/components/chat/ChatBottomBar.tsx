@@ -9,12 +9,16 @@ import { usePreferences } from "@/store/usePreferences";
 import { useMutation } from "@tanstack/react-query";
 import { sendMessageAction } from "@/actions/message.actions";
 import { useSelectedUser } from "@/store/useSelectedUser";
+import { CldUploadWidget, CloudinaryUploadWidgetInfo } from 'next-cloudinary';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import Image from "next/image";
 
 const ChatBottomBar = () => {
     const [message, setMessage] = useState("");
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const { soundEnabled } = usePreferences();
     const { selectedUser } = useSelectedUser();
+    const [imgUrl, setImgUrl] = useState("");
 
     const [playSound1] = useSound("/sounds/keystroke1.mp3");
     const [playSound2] = useSound("/sounds/keystroke2.mp3");
@@ -60,7 +64,51 @@ const ChatBottomBar = () => {
 
     return (
         <div className="p-2 flex justify-between w-full items-center gap-2">
-            {!message.trim() && <ImageIcon size={20} className="cursor-pointer text-muted-foreground" />} {/* Not displaying image icon IFF we write anything inside the textarea, else (while not typing message) displaying it */}
+            {!message.trim() && (
+                /* Uploading image to cloudinary storage */
+                <CldUploadWidget
+                    signatureEndpoint={"/api/sign-cloudinary-params"}
+                    onSuccess={(result, { widget }) => {
+                        setImgUrl((result.info as CloudinaryUploadWidgetInfo).secure_url); //setting image url as cloudinary widget uploaded by user
+                        widget.close(); //closing the cloudiary widget after uploading
+                    }}
+                >
+                    {({ open }) => {
+                        return (<ImageIcon
+                            size={20}
+                            className="cursor-pointer text-muted-foreground"
+                            onClick={() => open()}
+                        />);
+                    }}
+                </CldUploadWidget>
+            )} {/* Not displaying image icon IFF we write anything inside the textarea, else (while not typing message) displaying it */}
+
+            {/* Dialog box for sending image after uploading to cloudinary */}
+            <Dialog open={!!imgUrl}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Image Preview</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex justify-center items-center relative h-96 w-full mx-auto">
+                        <Image src={imgUrl} alt="Image preview" fill className="object-contain" />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="submit"
+                            onClick={() => {
+                                sendMessage({
+                                    content: imgUrl,
+                                    messageType: "image",
+                                    receiverId: selectedUser?.id!
+                                });
+                                setImgUrl(''); //cleanup
+                            }}
+                        >
+                            Send
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <AnimatePresence>
                 <motion.div
@@ -117,14 +165,14 @@ const ChatBottomBar = () => {
                         variant={"ghost"}
                         size={"icon"}
                     >
-                        {!isPending && <ThumbsUp size={20} className="text-muted-foreground" 
-                        onClick={() => {
-                            sendMessage({
-                                content: "👍👍",
-                                messageType: "text",
-                                receiverId: selectedUser?.id!
-                            });
-                        }} 
+                        {!isPending && <ThumbsUp size={20} className="text-muted-foreground"
+                            onClick={() => {
+                                sendMessage({
+                                    content: "👍👍",
+                                    messageType: "text",
+                                    receiverId: selectedUser?.id!
+                                });
+                            }}
                         />}
                         {isPending && <Loader size={20} className="animate-spin text-muted-foreground" />}
                     </Button>
