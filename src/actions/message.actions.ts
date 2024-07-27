@@ -53,3 +53,17 @@ export async function sendMessageAction({ content, messageType, receiverId }: se
 
     return { success: true, conversationId, messageId };
 }
+
+
+export async function getMessages(selectedUserId: string, currentUserId: string) {
+    const conversationId = `conversation:${[selectedUserId, currentUserId].sort().join(":")}`;
+    const messageIds = await redis.zrange(`${conversationId}:messages`, 0, -1); //fetching all messages ids under a particular conversationId
+
+    if (messageIds.length === 0) return []; //no messages in the convo
+    
+    const pipeline = redis.pipeline();
+    messageIds.forEach((messageId) => pipeline.hgetall(messageId as string)); //getting all hashset info for each message
+    const messages = await pipeline.exec() as Message[]; //exporting the messages as an array.
+
+    return messages;
+}
