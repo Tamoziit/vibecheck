@@ -6,13 +6,14 @@ import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { getMessages } from "@/actions/message.actions";
 import { useEffect, useRef } from "react";
+import MessageSkeleton from "../skeletons/MessageSkeleton";
 
 const MesssageList = () => {
     const { selectedUser } = useSelectedUser();
     const { user: currentUser, isLoading: isUserLoading } = useKindeBrowserClient();
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
-    const { data: messages, isLoading } = useQuery({
+    const { data: messages, isLoading: isMessagesLoading } = useQuery({
         queryKey: ["messages", selectedUser?.id],
         queryFn: async () => {
             if (selectedUser && currentUser) {
@@ -24,16 +25,16 @@ const MesssageList = () => {
 
     //Implements automatic scroll to latest message
     useEffect(() => {
-       if(messageContainerRef.current) {
-        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-       } 
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
     }, [messages]);
 
     return (
         <div className="w-full overflow-y-auto overflow-x-hidden h-full flex flex-col" ref={messageContainerRef}>
             {/*Animated message popup*/}
             <AnimatePresence>
-                {messages?.map((message, index) => (
+                {!isMessagesLoading && messages?.map((message, index) => (
                     /* Special div from framer-motion allowing animations */
                     <motion.div
                         key={index}
@@ -90,6 +91,14 @@ const MesssageList = () => {
                         </div>
                     </motion.div>
                 ))}
+
+                {isMessagesLoading && (
+                    <>
+                        <MessageSkeleton />
+                        <MessageSkeleton />
+                        <MessageSkeleton />
+                    </>
+                )}
             </AnimatePresence>
         </div>
     )

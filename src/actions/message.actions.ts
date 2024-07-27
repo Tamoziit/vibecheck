@@ -1,5 +1,6 @@
 "use server";
 
+import { Message } from "@/db/dummy";
 import { redis } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
@@ -60,7 +61,7 @@ export async function getMessages(selectedUserId: string, currentUserId: string)
     const messageIds = await redis.zrange(`${conversationId}:messages`, 0, -1); //fetching all messages ids under a particular conversationId
 
     if (messageIds.length === 0) return []; //no messages in the convo
-    
+
     const pipeline = redis.pipeline();
     messageIds.forEach((messageId) => pipeline.hgetall(messageId as string)); //getting all hashset info for each message
     const messages = await pipeline.exec() as Message[]; //exporting the messages as an array.
