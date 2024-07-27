@@ -1,17 +1,20 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Image as ImageIcon, Loader, SendHorizonal, ThumbsUp } from "lucide-react";
+import { Image as ImageIcon, Loader, SendHorizontal, ThumbsUp } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { useRef, useState } from "react";
 import EmojiPicker from "./EmojiPicker";
 import { Button } from "../ui/button";
 import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
+import { useMutation } from "@tanstack/react-query";
+import { sendMessageAction } from "@/actions/message.actions";
+import { useSelectedUser } from "@/store/useSelectedUser";
 
 const ChatBottomBar = () => {
     const [message, setMessage] = useState("");
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
-    const isPending = false;
-    const {soundEnabled} = usePreferences();
+    const { soundEnabled } = usePreferences();
+    const { selectedUser } = useSelectedUser();
 
     const [playSound1] = useSound("/sounds/keystroke1.mp3");
     const [playSound2] = useSound("/sounds/keystroke2.mp3");
@@ -23,6 +26,36 @@ const ChatBottomBar = () => {
     const playRandomKeyStrokeSound = () => {
         const randomIndex = Math.floor(Math.random() * playSoundFunctions.length);
         soundEnabled && playSoundFunctions[randomIndex]();
+    }
+
+    const { mutate: sendMessage, isPending } = useMutation({
+        mutationFn: sendMessageAction
+    });
+
+    const handleSendMessage = () => {
+        if (!message.trim()) return; //No message state
+
+        sendMessage({
+            content: message,
+            messageType: "text",
+            receiverId: selectedUser?.id! //! = signifies that id is always present
+        });
+        //cleanup states
+        setMessage('');
+        textAreaRef.current?.focus();
+    }
+
+    //Sending message on clicking enter key & getting new line by pressing enter+shift
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage(); //sending message
+        }
+
+        if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            setMessage(message + "\n"); //newline
+        }
     }
 
     return (
@@ -50,6 +83,7 @@ const ChatBottomBar = () => {
                         rows={1}
                         className="w-full border rounded-full flex items-center h-9 resize-none overflow-hidden bg-background min-h-0"
                         value={message}
+                        onKeyDown={handleKeyDown}
                         onChange={(e) => {
                             setMessage(e.target.value);
                             playRandomKeyStrokeSound();
@@ -73,8 +107,9 @@ const ChatBottomBar = () => {
                         className="h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
                         variant={"ghost"}
                         size={"icon"}
+                        onClick={handleSendMessage}
                     >
-                        <SendHorizonal size={20} className="text-muted-foreground" />
+                        <SendHorizontal size={20} className="text-muted-foreground" />
                     </Button>
                 ) : (
                     <Button
@@ -82,7 +117,15 @@ const ChatBottomBar = () => {
                         variant={"ghost"}
                         size={"icon"}
                     >
-                        {!isPending && <ThumbsUp size={20} className="text-muted-foreground" />}
+                        {!isPending && <ThumbsUp size={20} className="text-muted-foreground" 
+                        onClick={() => {
+                            sendMessage({
+                                content: "👍👍",
+                                messageType: "text",
+                                receiverId: selectedUser?.id!
+                            });
+                        }} 
+                        />}
                         {isPending && <Loader size={20} className="animate-spin text-muted-foreground" />}
                     </Button>
                 )}
