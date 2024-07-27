@@ -2,8 +2,13 @@
 import { Button } from "@/components/ui/button"; //@ = src dir.
 import Image from "next/image"; //Configured default img of Next.js
 import AuthButtons from "./AuthButtons";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { redirect } from "next/navigation";
 
-const page = () => {
+const page = async () => {
+    const {isAuthenticated} = getKindeServerSession();
+    if(await isAuthenticated()) return redirect("/"); //not allowing already authenticated users to visit the auth page once again.
+
     return (
         <div className="flex h-screen w-full">
 

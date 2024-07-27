@@ -2,11 +2,15 @@ import Image from "next/image";
 import PreferencesTab from "../components/PreferencesTab";
 import ChatLayout from "@/components/chat/ChatLayout";
 import { cookies } from "next/headers";
-import { redis } from "@/lib/db";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const layout = cookies().get("react-resizable-panels:layout"); //storing chat panels sizes in cookies to store theirs states over refreshes.
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined;
+
+  const {isAuthenticated} = getKindeServerSession();
+    if(!(await isAuthenticated())) return redirect("/auth"); //not allowing un-authenticated users to visit the home page.
 
   return (
     <main className="flex h-screen flex-col items-center justify-center p-4 md:px-24 py-32 gap-4">
