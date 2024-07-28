@@ -6,6 +6,7 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import { User } from "@/db/dummy";
 import { redis } from "@/lib/db";
+import { Toaster } from "react-hot-toast";
 
 //Fetching users for the sidebar
 async function getUsers(): Promise<User[]> {
@@ -59,6 +60,7 @@ export default async function Home() {
       <div className="z-10 border rounded-lg max-w-5xl w-full min-h-[85vh] text-sm lg:flex">
         <ChatLayout defaultLayout={defaultLayout} users={users} />
       </div>
+      <Toaster />
     </main>
   );
 }

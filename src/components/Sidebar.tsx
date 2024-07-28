@@ -1,15 +1,18 @@
-import { User, USERS } from "@/db/dummy";
+import { User } from "@/db/dummy";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { LogOut } from "lucide-react";
+import { LogOut, SearchIcon } from "lucide-react";
 import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { useSelectedUser } from "@/store/useSelectedUser";
-import {useKindeBrowserClient} from "@kinde-oss/kinde-auth-nextjs";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -20,16 +23,92 @@ const Sidebar = ({ isCollapsed, users }: SidebarProps) => {
     const [playClickSound] = useSound("/sounds/mouse-click.mp3");
     const { soundEnabled } = usePreferences();
     const { selectedUser, setSelectedUser } = useSelectedUser();
-    const {user} = useKindeBrowserClient(); //gets the logged in user of the browser inside a client component (NB: useKindeServerSession() hook will not work here coz, this component (Sidebar) is not a server compnent)
+    const { user } = useKindeBrowserClient(); //gets the logged in user of the browser inside a client component (NB: useKindeServerSession() hook will not work here coz, this component (Sidebar) is not a server compnent)
+    const [search, setSearch] = useState("");
+    const [dialog, setDialog] = useState(false);
+
+    const handleSearch = () => {
+        let isSearchedUserPresent = null;
+        let i = 0;
+        for (i = 0; i < users.length; i++) {
+            if (users[i].name.includes(search) || users[i].email.includes(search)) {
+                isSearchedUserPresent = users[i];
+                break;
+            }
+        }
+        if (isSearchedUserPresent)
+            setSelectedUser(isSearchedUserPresent);
+        else
+            toast.error("No such user found!");
+        setSearch("");
+        setDialog(false);
+    }
 
     return (
         <div className="group relative flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2 max-h-full overflow-auto bg-background">
-            {!isCollapsed && (
+            {!isCollapsed ? (
                 <div className="flex justify-between p-2 items-center">
-                    <div className="flex gap-2 items-center text-2xl">
-                        <p className="font-medium">Chats</p>
+                    <div className="flex flex-col gap-2 w-full">
+                        <p className="font-medium text-2xl">Chats</p>
+                        <div className="flex flex-col gap-0.5">
+                            <label className="font-medium text-muted-foreground text-">Search</label>
+                            <div className="flex dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden">
+                                <input
+                                    type="text"
+                                    placeholder="Enter name or email..."
+                                    className="w-full bg-transparent outline-none border-none text-xs"
+                                    value={search}
+                                    onChange={(e) => {
+                                        setSearch(e.target.value);
+                                    }}
+                                />
+                                <Button
+                                    className="text-muted-foreground hover:text-white cursor-pointer"
+                                    variant={"ghost"}
+                                    size={"sm"}
+                                    onClick={handleSearch}
+                                >
+                                    <SearchIcon />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            ) : (<div className="flex items-center mt-2 px-2">
+                <SearchIcon className="font-semibold cursor-pointer h-7 w-7 ml-2"
+                    onClick={() => {
+                        setDialog(true);
+                    }}
+                />
+                <Dialog open={dialog} onOpenChange={setDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Search</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex justify-center items-center relative h-1 w-full mx-auto">
+                            <input
+                                type="text"
+                                placeholder="Enter name or email..."
+                                className="w-full h-8 mt-4 bg-transparent outline-none border-none text-sm dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden"
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                }}
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                className="text-muted-foreground hover:text-white mt-4 cursor-pointer"
+                                variant={"grey"}
+                                size={"sm"}
+                                onClick={handleSearch}
+                            >
+                                <SearchIcon />
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
             )}
 
             <ScrollArea className="gap-2 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
@@ -83,7 +162,7 @@ const Sidebar = ({ isCollapsed, users }: SidebarProps) => {
                     )
                 ))}
             </ScrollArea>
-            
+
             {/* Sidebar Footer */}
             <div className="mt-auto">
                 <div className="flex justify-between items-center gap-2 md:px-6 py-2">

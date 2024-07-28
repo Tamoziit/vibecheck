@@ -1,4 +1,3 @@
-"use client";
 import { AnimatePresence, motion } from "framer-motion";
 import { Image as ImageIcon, Loader, SendHorizontal, ThumbsUp } from "lucide-react";
 import { Textarea } from "../ui/textarea";
@@ -24,12 +23,14 @@ const ChatBottomBar = () => {
     const { selectedUser } = useSelectedUser();
     const { user: currentUser } = useKindeBrowserClient();
     const [imgUrl, setImgUrl] = useState("");
+    const [dialog, setDialog] = useState(false);
     const queryClient = useQueryClient();
 
     const [playSound1] = useSound("/sounds/keystroke1.mp3");
     const [playSound2] = useSound("/sounds/keystroke2.mp3");
     const [playSound3] = useSound("/sounds/keystroke3.mp3");
     const [playSound4] = useSound("/sounds/keystroke4.mp3");
+    const [playNotificationSound] = useSound("/sounds/notification.mp3");
 
     const playSoundFunctions = [playSound1, playSound2, playSound3, playSound4];
     //keyboard sound while typing
@@ -63,17 +64,21 @@ const ChatBottomBar = () => {
             queryClient.setQueryData(["messages", selectedUser?.id], (oldMessages: Message[]) => {
                 return [...oldMessages, data.message]; //returns all the previous messages after appending the latest message to it
             });
+
+            if (soundEnabled && data.message.senderId !== currentUser?.id) {
+                playNotificationSound(); //notific sound only for receiver
+            }
         }
 
         //listening to server
         channel.bind("newMessage", handleNewMessage);
 
-        //cleanup or un-mounting
+        //cleanup or un-mounting --> Important!! (otherwise a single message might be rendered multiple times)
         return () => {
             channel.unbind("newMessage", handleNewMessage);
             pusherClient.unsubscribe(channelName);
         }
-    }, [currentUser?.id, selectedUser?.id, queryClient]);
+    }, [currentUser?.id, selectedUser?.id, queryClient, playNotificationSound, soundEnabled]);
 
     //Sending message on clicking enter key & getting new line by pressing enter+shift
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -97,6 +102,7 @@ const ChatBottomBar = () => {
                     onSuccess={(result, { widget }) => {
                         setImgUrl((result.info as CloudinaryUploadWidgetInfo).secure_url); //setting image url as cloudinary widget uploaded by user
                         widget.close(); //closing the cloudiary widget after uploading
+                        setDialog(true);
                     }}
                 >
                     {({ open }) => {
@@ -110,7 +116,7 @@ const ChatBottomBar = () => {
             )} {/* Not displaying image icon IFF we write anything inside the textarea, else (while not typing message) displaying it */}
 
             {/* Dialog box for sending image after uploading to cloudinary */}
-            <Dialog open={!!imgUrl}>
+            <Dialog open={dialog} onOpenChange={setDialog}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Image Preview</DialogTitle>
@@ -127,7 +133,9 @@ const ChatBottomBar = () => {
                                     messageType: "image",
                                     receiverId: selectedUser?.id!
                                 });
-                                setImgUrl(''); //cleanup
+                                //cleanup
+                                setImgUrl('');
+                                setDialog(false);
                             }}
                         >
                             Send
