@@ -14,7 +14,7 @@ const MesssageList = () => {
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: messages, isLoading: isMessagesLoading } = useQuery({
-        queryKey: ["messages", selectedUser?.id],
+        queryKey: ["messages", selectedUser?.id], //used as a state manager while fetching the latest message from convo in realtime
         queryFn: async () => {
             if (selectedUser && currentUser) {
                 return await getMessages(selectedUser?.id, currentUser?.id);

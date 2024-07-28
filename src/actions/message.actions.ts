@@ -3,6 +3,7 @@
 import { Message } from "@/db/dummy";
 import { redis } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { pusherServer } from "@/lib/pusher";
 
 type sendMessageActionArgs = {
     content: string;
@@ -51,6 +52,12 @@ export async function sendMessageAction({ content, messageType, receiverId }: se
     });
 
     await redis.zadd(`${conversationId}:messages`, { score: timestamp, member: JSON.stringify(messageId) }); //Pushing the message inside a sorted set for a convo, sorted according to the time they were sent/set to DB.
+
+    //Realtime messaging implementation
+    const channelName = `${senderId}__${receiverId}`.split('__').sort().join('__');
+    await pusherServer?.trigger(channelName, 'newMessage', {
+        message: { senderId, content, timestamp, messageType }
+    }); //triggers a newMessage on server instance
 
     return { success: true, conversationId, messageId };
 }
