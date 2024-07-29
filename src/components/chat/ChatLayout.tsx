@@ -6,6 +6,7 @@ import Sidebar from "../Sidebar";
 import MessageContainer from "./MessageContainer";
 import { User } from "@/db/dummy";
 import { useSelectedUser } from "@/store/useSelectedUser";
+import { useTheme } from "next-themes";
 
 //Typedef
 interface ChatLayoutProps {
@@ -17,6 +18,7 @@ const ChatLayout = ({ defaultLayout = [320, 480], users }: ChatLayoutProps) => {
     const [isMobile, setIsMobile] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const { selectedUser } = useSelectedUser();
+    const { theme } = useTheme();
 
     useEffect(() => {
         const checkScreenWidth = () => {
@@ -68,7 +70,11 @@ const ChatLayout = ({ defaultLayout = [320, 480], users }: ChatLayoutProps) => {
                 {!selectedUser && (
                     <div className="flex justify-center items-center h-full w-full px-10">
                         <div className="flex flex-col justify-center items-center gp-4">
-                            <img src="/logo.png" alt='Logo' className="w-full md:w-2/3 lg:w-1/2" />
+                            {theme === "dark" ? (
+                                <img src="/logo.png" alt='Logo' className="w-full md:w-2/3 lg:w-1/2" />
+                            ) : (
+                                <img src="/logo-inverted.png" alt='Logo' className="w-full md:w-2/3 lg:w-1/2" />
+                            )}
                             <p className="text-muted-foreground text-center">Click on a chat to view the messages</p>
                         </div>
                     </div>
