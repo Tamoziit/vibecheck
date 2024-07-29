@@ -3,6 +3,7 @@
 
 import { redis } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import toast from "react-hot-toast";
 
 export async function checkAuthStatus() {
     const { getUser } = getKindeServerSession(); //returns authenticated user from Kinde
@@ -28,6 +29,8 @@ export async function checkAuthStatus() {
             name: `${user.given_name} ${user.family_name}`,
             image: image
         });
+        
+        //toast.success("Welcome to the place where Swag meets Vibe😎"); --> To FIX
     }
 
     return { success: true };

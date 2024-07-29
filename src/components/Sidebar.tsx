@@ -52,7 +52,7 @@ const Sidebar = ({ isCollapsed, users }: SidebarProps) => {
                         <p className="font-medium text-2xl">Chats</p>
                         <div className="flex flex-col gap-0.5">
                             <label className="font-medium text-muted-foreground text-">Search</label>
-                            <div className="flex dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden">
+                            <div className="flex dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden bg-slate-200">
                                 <input
                                     type="text"
                                     placeholder="Enter name or email..."
@@ -89,7 +89,7 @@ const Sidebar = ({ isCollapsed, users }: SidebarProps) => {
                             <input
                                 type="text"
                                 placeholder="Enter name or email..."
-                                className="w-full h-8 mt-4 bg-transparent outline-none border-none text-sm dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden"
+                                className="w-full h-8 mt-4 bg-transparent outline-none border-none text-sm dark:bg-muted dark:test-white dark:hover:text-white shrink px-1.5 rounded-full overflow-hidden bg-slate-200"
                                 value={search}
                                 onChange={(e) => {
                                     setSearch(e.target.value);
